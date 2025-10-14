@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import produits from "../data/produits";
+import produits from "../data/Produits";
 import Hero from "../components/Hero";
 import Trierpar from "../components/Trierpar";
 import Sidebar from "../components/Sidebar";

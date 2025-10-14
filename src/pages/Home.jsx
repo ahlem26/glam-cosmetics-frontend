@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import produits from "../data/produits";
+import produits from "../data/Produits";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useRef } from "react";
 
