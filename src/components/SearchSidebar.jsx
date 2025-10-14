@@ -2,7 +2,7 @@ import React, { useState, useMemo } from "react";
 import { X, Search } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useSearch } from "../context/SearchContext";
-import produits from "../data/produits";
+import produits from "../data/Produits";
 
 const SearchSidebar = () => {
   const { isOpen, closeSearch } = useSearch();
