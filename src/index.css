@@ -1,1 +1,11 @@
 @import "tailwindcss";
+
+/* Masquer la barre de défilement sur tous les navigateurs */
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE et Edge */
+  scrollbar-width: none; /* Firefox */
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Chrome, Safari */
+}
+
