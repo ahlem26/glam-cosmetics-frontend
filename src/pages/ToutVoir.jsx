@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import produits from "../data/Produits";
+import { getProduits } from "../api/api";
 import Hero from "../components/Hero";
 import Trierpar from "../components/Trierpar";
 import Sidebar from "../components/Sidebar";
@@ -7,21 +7,47 @@ import Grilleproduits from "../components/Grilleproduits";
 import Pagination from "../components/Pagination";
 
 const categories = [
-    "Tout", "Visage", "Accessoires", "Parfums", "Cheveux", "Maquillage", "Corps", "Promos et offres", "Nouveautés", "Meilleures ventes"
+    "Tout", "Visage", "Accessoires", "Parfums", "Cheveux",
+    "Maquillage", "Corps", "Promos et offres", "Nouveautés", "Meilleures ventes"
 ];
 
 export default function ToutVoir() {
+    const [produits, setProduits] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        const fetchProduits = async () => {
+            try {
+                setLoading(true);
+                const data = await getProduits();
+
+                // Vérification du type de réponse
+                if (Array.isArray(data)) {
+                    setProduits(data);
+                } else if (data.products && Array.isArray(data.products)) {
+                    setProduits(data.products);
+                } else {
+                    console.error("⚠️ Format de données inattendu :", data);
+                    setError("Les données reçues ne sont pas valides");
+                }
+            } catch (err) {
+                console.error("Erreur lors du chargement des produits :", err);
+                setError("Impossible de charger les produits");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchProduits();
+    }, []);
+
     const [categorieActive, setCategorieActive] = useState("Tout");
     const [sortOption, setSortOption] = useState("trierpar");
     const [prixMax, setPrixMax] = useState(0);
-
-    // états pour accordion
     const [showCategories, setShowCategories] = useState(true);
     const [showPrice, setShowPrice] = useState(true);
-
-    // ✅ menu "Trier par"
     const [openSort, setOpenSort] = useState(false);
-
     const [pageActuelle, setPageActuelle] = useState(1);
     const produitsParPage = 8;
 
@@ -29,17 +55,15 @@ export default function ToutVoir() {
     const { minPrix, maxPrix } = useMemo(() => {
         const allPrices = produits.map(p => p.promo ? p.promoPrix : p.prix);
         return {
-            minPrix: Math.min(...allPrices),
-            maxPrix: Math.max(...allPrices),
+            minPrix: allPrices.length ? Math.min(...allPrices) : 0,
+            maxPrix: allPrices.length ? Math.max(...allPrices) : 0,
         };
-    }, []);
+    }, [produits]);
 
-    // initialisation prix max
     useEffect(() => {
         setPrixMax(maxPrix);
     }, [maxPrix]);
 
-    // ✅ Réinitialiser filtres
     const resetFiltres = () => {
         setCategorieActive("Tout");
         setPrixMax(maxPrix);
@@ -50,21 +74,8 @@ export default function ToutVoir() {
     const produitsFiltres = produits.filter(p => {
         if (categorieActive === "Tout") return true;
         if (categorieActive === "Promos et offres") return p.promo;
-        if (categorieActive === "Nouveautés") {
-            // On réutilise ta logique ici
-            return p.nouveau === true || new Date(p.date) > new Date("2025-09-15");
-        }
-        // if (categorieActive === "Nouveautés") {
-        //     const maintenant = new Date();
-        //     const dateProduit = new Date(p.date);
-        //     const difference = maintenant - dateProduit;
-        //     const unMois = 30 * 24 * 60 * 60 * 1000;
-        //     return difference <= unMois;
-        // }
-        if (categorieActive === "Meilleures ventes") {
-            // Produits ayant un grand nombre de ventes
-            return p.ventes && p.ventes > 200; // tu peux ajuster le seuil ici (ex: > 100)
-        }
+        if (categorieActive === "Nouveautés") return p.nouveau || new Date(p.date) > new Date("2025-09-15");
+        if (categorieActive === "Meilleures ventes") return p.ventes && p.ventes > 200;
         return p.categorie === categorieActive;
     });
 
@@ -99,24 +110,43 @@ export default function ToutVoir() {
 
     return (
         <div className="space-y-16">
-            {/* 🔹 Hero Section */}
-            <Hero image={'/images/c837a6_485c12bc527e4b2db81fc1417bea4daf~mv2.avif'} titre={"TOUT VOIR"} />
+            <Hero image="/images/c837a6_485c12bc527e4b2db81fc1417bea4daf~mv2.avif" titre="TOUT VOIR" />
 
-            {/* 🔹 Layout */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-8 px-65">
-                {/* Sidebar gauche */}
-                <Sidebar categories={categories} setShowCategories={setShowCategories} showCategories={showCategories} setCategorieActive={setCategorieActive} categorieActive={categorieActive} setShowPrice={setShowPrice} showPrice={showPrice} minPrix={minPrix} maxPrix={maxPrix} prixMax={prixMax} setPrixMax={setPrixMax} resetFiltres={resetFiltres} />
+                <Sidebar
+                    categories={categories}
+                    setShowCategories={setShowCategories}
+                    showCategories={showCategories}
+                    setCategorieActive={setCategorieActive}
+                    categorieActive={categorieActive}
+                    setShowPrice={setShowPrice}
+                    showPrice={showPrice}
+                    minPrix={minPrix}
+                    maxPrix={maxPrix}
+                    prixMax={prixMax}
+                    setPrixMax={setPrixMax}
+                    resetFiltres={resetFiltres}
+                />
 
-                {/* Produits */}
                 <main className="md:col-span-3">
-                    {/* 🔹 Trier par customisé */}
-                    <Trierpar setOpenSort={setOpenSort} openSort={openSort} sortOption={sortOption} setSortOption={setSortOption} />
+                    <Trierpar
+                        setOpenSort={setOpenSort}
+                        openSort={openSort}
+                        sortOption={sortOption}
+                        setSortOption={setSortOption}
+                    />
 
-                    {/* Grille produits */}
-                    <Grilleproduits produitsPage={produitsPage} />
+                    <Grilleproduits
+                        produitsPage={produitsPage}
+                        loading={loading}
+                        error={error}
+                    />
 
-                    {/* Pagination */}
-                    <Pagination setPageActuelle={setPageActuelle} pageActuelle={pageActuelle} totalPages={totalPages} />
+                    <Pagination
+                        setPageActuelle={setPageActuelle}
+                        pageActuelle={pageActuelle}
+                        totalPages={totalPages}
+                    />
                 </main>
             </div>
         </div>

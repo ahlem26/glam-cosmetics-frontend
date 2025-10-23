@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import produits from "../data/Produits";
+import { getProduits } from "../api/api";
 import Hero from "../components/Hero";
 import Trierpar from "../components/Trierpar";
 import Sidebar from "../components/Sidebar";
@@ -11,6 +11,36 @@ const categories = [
 ];
 
 export default function Nouveautes() {
+    const [produits, setProduits] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        const fetchProduits = async () => {
+            try {
+                setLoading(true);
+                const data = await getProduits();
+
+                // Vérification du type de réponse
+                if (Array.isArray(data)) {
+                    setProduits(data);
+                } else if (data.products && Array.isArray(data.products)) {
+                    setProduits(data.products);
+                } else {
+                    console.error("⚠️ Format de données inattendu :", data);
+                    setError("Les données reçues ne sont pas valides");
+                }
+            } catch (err) {
+                console.error("Erreur lors du chargement des produits :", err);
+                setError("Impossible de charger les produits");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchProduits();
+    }, []);
+
     // 🔹 On filtre les produits récents ou marqués comme "nouveaux"...........
     const nouveautes = produits.filter(
         (produit) => produit.nouveau === true || new Date(produit.date) > new Date("2025-09-15")
@@ -124,7 +154,11 @@ export default function Nouveautes() {
                     <Trierpar setOpenSort={setOpenSort} openSort={openSort} sortOption={sortOption} setSortOption={setSortOption} />
 
                     {/* Grille produits */}
-                    <Grilleproduits produitsPage={produitsPage} />
+                    <Grilleproduits
+                        produitsPage={produitsPage}
+                        loading={loading}
+                        error={error}
+                    />
 
                     {/* Pagination */}
                     <Pagination setPageActuelle={setPageActuelle} pageActuelle={pageActuelle} totalPages={totalPages} />

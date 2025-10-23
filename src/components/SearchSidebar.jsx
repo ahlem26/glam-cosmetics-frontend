@@ -1,10 +1,40 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { X, Search } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useSearch } from "../context/SearchContext";
-import produits from "../data/Produits";
+import { getProduits } from "../api/api";
 
 const SearchSidebar = () => {
+  const [produits, setProduits] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchProduits = async () => {
+      try {
+        setLoading(true);
+        const data = await getProduits();
+
+        // Vérification du type de réponse
+        if (Array.isArray(data)) {
+          setProduits(data);
+        } else if (data.products && Array.isArray(data.products)) {
+          setProduits(data.products);
+        } else {
+          console.error("⚠️ Format de données inattendu :", data);
+          setError("Les données reçues ne sont pas valides");
+        }
+      } catch (err) {
+        console.error("Erreur lors du chargement des produits :", err);
+        setError("Impossible de charger les produits");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProduits();
+  }, []);
+
   const { isOpen, closeSearch } = useSearch();
   const [query, setQuery] = useState("");
 
@@ -18,15 +48,42 @@ const SearchSidebar = () => {
         p.description.toLowerCase().includes(q) ||
         p.categorie.toLowerCase().includes(q)
     );
-  }, [query]);
+  }, [query, produits]);
 
   // 🔝 Produits les plus populaires
   const topProduits = useMemo(
     () => [...produits].sort((a, b) => b.ventes - a.ventes).slice(0, 6),
-    []
+    [produits]
   );
 
   if (!isOpen) return null;
+
+  // 🔹 🧠 1️⃣ Gérer chargement
+  if (loading) {
+    return (
+      <div className="py-40 flex flex-col items-center justify-center space-y-4">
+        {/* Squelettes (loading skeletons) */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 w-[80%]">
+          {[...Array(8)].map((_, i) => (
+            <div
+              key={i}
+              className="animate-pulse bg-gray-100 rounded-2xl h-64 shadow-sm"
+            ></div>
+          ))}
+        </div>
+        <p className="text-gray-500 text-lg">Chargement des produits...</p>
+      </div>
+    );
+  }
+
+  // 🔹 🧠 2️⃣ Gérer erreur
+  if (error) {
+    return (
+      <div className="text-center text-red-500 py-40 text-lg font-semibold">
+        {error}
+      </div>
+    );
+  }
 
   return (
     <>
@@ -51,11 +108,11 @@ const SearchSidebar = () => {
               className="w-full outline-none text-gray-700 text-lg"
             />
             <button
-            className="bg-orange-600 text-white py-3 px-8 rounded-full hover:bg-orange-700 transition"
-            onClick={closeSearch}
-          >
-            Fermer
-          </button>
+              className="bg-orange-600 text-white py-3 px-8 rounded-full hover:bg-orange-700 transition"
+              onClick={closeSearch}
+            >
+              Fermer
+            </button>
           </div>
 
           {/* Résultats de recherche */}

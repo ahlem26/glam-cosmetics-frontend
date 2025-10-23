@@ -24,39 +24,58 @@ import CartSidebar from "./components/CartSidebar";
 import CartPage from "./pages/CartPage";
 import FavoritesSidebar from "./components/FavoritesSidebar";
 import SearchSidebar from "./components/SearchSidebar";
+import AjouterProduit from "./pages/Admin/AjouterProduit";
+import Dashboard from "./pages/Admin/Dashboard";
+import AdminLayout from "./layouts/AdminLayout";
 
 function App() {
   return (
     <Router>
-      <Navbar />
-      <CartSidebar />
-      <FavoritesSidebar />
-      <SearchSidebar />
-      <main className="min-h-screen">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/toutvoir" element={<ToutVoir />} />
-          <Route path="/produit/:id" element={<ProduitDetail />} />
-          <Route path="/nouveautes" element={<Nouveautes />} />
-          <Route path="/visage" element={<Visage />} />
-          <Route path="/accessoires" element={<Accessoires />} />
-          <Route path="/parfums" element={<Parfums />} />
-          <Route path="/cheveux" element={<Cheveux />} />
-          <Route path="/maquillage" element={<Maquillage />} />
-          <Route path="/corps" element={<Corps />} />
-          <Route path="/promos" element={<Promos />} />
-          <Route path="/apropos" element={<AproposPage />} />
-          <Route path="/service-client" element={<ServiceClient />} />
-          <Route path="/adresses" element={<Adresses />} />
-          <Route path="/livraison" element={<LivraisonRetours />} />
-          <Route path="/conditions" element={<TermesConditions />} />
-          <Route path="/paiement" element={<MoyensPaiement />} />
-          <Route path="/mentions" element={<MentionsLegales />} />
-          <Route path="/cookies" element={<PolitiqueCookies />} />
-          <Route path="/cart" element={<CartPage />} />
-        </Routes>
-      </main>
-      <Footer />
+      <Routes>
+        {/* 🌐 Routes publiques avec Navbar & Footer */}
+        <Route
+          path="/*"
+          element={
+            <>
+              <Navbar />
+              <CartSidebar />
+              <FavoritesSidebar />
+              <SearchSidebar />
+              <main className="min-h-screen">
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/toutvoir" element={<ToutVoir />} />
+                  <Route path="/produit/:id" element={<ProduitDetail />} />
+                  <Route path="/nouveautes" element={<Nouveautes />} />
+                  <Route path="/visage" element={<Visage />} />
+                  <Route path="/accessoires" element={<Accessoires />} />
+                  <Route path="/parfums" element={<Parfums />} />
+                  <Route path="/cheveux" element={<Cheveux />} />
+                  <Route path="/maquillage" element={<Maquillage />} />
+                  <Route path="/corps" element={<Corps />} />
+                  <Route path="/promos" element={<Promos />} />
+                  <Route path="/apropos" element={<AproposPage />} />
+                  <Route path="/service-client" element={<ServiceClient />} />
+                  <Route path="/adresses" element={<Adresses />} />
+                  <Route path="/livraison" element={<LivraisonRetours />} />
+                  <Route path="/conditions" element={<TermesConditions />} />
+                  <Route path="/paiement" element={<MoyensPaiement />} />
+                  <Route path="/mentions" element={<MentionsLegales />} />
+                  <Route path="/cookies" element={<PolitiqueCookies />} />
+                  <Route path="/cart" element={<CartPage />} />
+                </Routes>
+              </main>
+              <Footer />
+            </>
+          }
+        />
+
+        {/* ⚙️ Routes Admin sans Navbar/Footer */}
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<Dashboard />} />
+          <Route path="ajouterproduit" element={<AjouterProduit />} />
+        </Route>
+      </Routes>
     </Router>
   );
 }

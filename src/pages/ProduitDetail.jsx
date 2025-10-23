@@ -1,12 +1,42 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useContext } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import produits from "../data/Produits";
+import { getProduits } from "../api/api";
 import { ArrowLeft, ArrowRight, Heart } from "lucide-react";
 import { CartContext } from "../context/CartContext"; // ✅ Import direct du contexte
 import { FavoritesContext } from "../context/FavoritesContext";
 
 export default function ProduitDetail() {
+  const [produits, setProduits] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchProduits = async () => {
+      try {
+        setLoading(true);
+        const data = await getProduits();
+
+        // Vérification du type de réponse
+        if (Array.isArray(data)) {
+          setProduits(data);
+        } else if (data.products && Array.isArray(data.products)) {
+          setProduits(data.products);
+        } else {
+          console.error("⚠️ Format de données inattendu :", data);
+          setError("Les données reçues ne sont pas valides");
+        }
+      } catch (err) {
+        console.error("Erreur lors du chargement des produits :", err);
+        setError("Impossible de charger les produits");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProduits();
+  }, []);
+
   const { id } = useParams();
   const produitIndex = produits.findIndex((p) => p.id === parseInt(id));
   const produit = produits[produitIndex];
@@ -53,6 +83,33 @@ export default function ProduitDetail() {
 
   const produitPrecedent = produits[produitIndex - 1];
   const produitSuivant = produits[produitIndex + 1];
+
+  // 🔹 🧠 1️⃣ Gérer chargement
+  if (loading) {
+    return (
+      <div className="py-40 flex flex-col items-center justify-center space-y-4">
+        {/* Squelettes (loading skeletons) */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 w-[80%]">
+          {[...Array(8)].map((_, i) => (
+            <div
+              key={i}
+              className="animate-pulse bg-gray-100 rounded-2xl h-64 shadow-sm"
+            ></div>
+          ))}
+        </div>
+        <p className="text-gray-500 text-lg">Chargement des produits...</p>
+      </div>
+    );
+  }
+
+  // 🔹 🧠 2️⃣ Gérer erreur
+  if (error) {
+    return (
+      <div className="text-center text-red-500 py-40 text-lg font-semibold">
+        {error}
+      </div>
+    );
+  }
 
   return (
     <div className="px-20 py-12">

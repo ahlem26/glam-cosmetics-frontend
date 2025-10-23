@@ -1,7 +1,32 @@
 import React from 'react'
 import { Link } from "react-router-dom";
 
-export default function Grilleproduits({ produitsPage }) {
+export default function Grilleproduits({ produitsPage, loading, error }) {
+    // 🔹 Gestion des états
+    if (loading) {
+        return (
+            <div className="text-center py-10 text-gray-500">
+                Chargement des produits...
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="text-center text-red-500 py-10">
+                {error}
+            </div>
+        );
+    }
+
+    // 🔹 Cas où aucun produit n’est trouvé
+    if (!produitsPage || produitsPage.length === 0) {
+        return (
+            <div className="text-center py-10 text-gray-400">
+                Aucun produit trouvé.
+            </div>
+        );
+    }
     return (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
             {produitsPage.map(prod => (

@@ -1,15 +1,45 @@
 import { Link } from "react-router-dom";
-import produits from "../data/Produits";
+import { getProduits } from "../api/api";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 
 function Home() {
+    const [produits, setProduits] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        const fetchProduits = async () => {
+            try {
+                setLoading(true);
+                const data = await getProduits();
+
+                // Vérification du type de réponse
+                if (Array.isArray(data)) {
+                    setProduits(data);
+                } else if (data.products && Array.isArray(data.products)) {
+                    setProduits(data.products);
+                } else {
+                    console.error("⚠️ Format de données inattendu :", data);
+                    setError("Les données reçues ne sont pas valides");
+                }
+            } catch (err) {
+                console.error("Erreur lors du chargement des produits :", err);
+                setError("Impossible de charger les produits");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchProduits();
+    }, []);
+
     const nouveautesRef = useRef(null);
-  const promosRef = useRef(null);
+    const promosRef = useRef(null);
 
     // 🔹 Fonctions de défilement
-  const scrollLeft = (ref) => ref.current.scrollBy({ left: -300, behavior: "smooth" });
-  const scrollRight = (ref) => ref.current.scrollBy({ left: 300, behavior: "smooth" });
+    const scrollLeft = (ref) => ref.current.scrollBy({ left: -300, behavior: "smooth" });
+    const scrollRight = (ref) => ref.current.scrollBy({ left: 300, behavior: "smooth" });
 
 
     // 🆕 Trier les produits par date décroissante (plus récents d'abord)
@@ -67,7 +97,30 @@ function Home() {
                         ref={nouveautesRef}
                         className="flex px-2 gap-6 overflow-x-auto scrollbar-hide snap-x snap-mandatory scroll-smooth pb-4"
                     >
-                        {nouveautes.map((p) => (
+                        {/* 🧠 GESTION DU CHARGEMENT */}
+                        {loading && (
+                            <div className="w-full text-center py-10">
+                                <div className="flex justify-center gap-4">
+                                    {[...Array(4)].map((_, i) => (
+                                        <div
+                                            key={i}
+                                            className="animate-pulse bg-gray-100 rounded-2xl w-[230px] h-64 shadow-sm"
+                                        ></div>
+                                    ))}
+                                </div>
+                                <p className="text-gray-500 mt-4 text-sm">Chargement des nouveautés...</p>
+                            </div>
+                        )}
+
+                        {/* 🧠 GESTION DES ERREURS */}
+                        {error && !loading && (
+                            <div className="w-full text-center text-red-500 py-10 font-semibold">
+                                {error}
+                            </div>
+                        )}
+
+                        {/* 🧠 AFFICHAGE NORMAL SI TOUT EST OK */}
+                        {!loading && !error && nouveautes.map((p) => (
                             <Link
                                 key={p.id}
                                 to={`/produit/${p.id}`}
@@ -306,45 +359,74 @@ function Home() {
                     >
                         <ChevronLeft className="w-6 h-6 text-gray-700" />
                     </button>
+
                     <div
                         ref={promosRef}
                         className="flex px-2 gap-6 overflow-x-auto scrollbar-hide snap-x snap-mandatory scroll-smooth pb-4"
                     >
-                        {produits
-                            .filter((p) => p.promo) // 👉 on garde seulement les produits en promo
-                            .map((p) => (
-                                <Link
-                                    key={p.id}
-                                    to={`/produit/${p.id}`}
-                                    className="min-w-[230px] bg-white rounded-2xl shadow-md hover:shadow-lg transition relative overflow-hidden snap-center"
-                                >
-                                    {/* Badge promo avec le % de réduction */}
-                                    <span className="absolute top-3 left-3 bg-[#d3420c] text-white text-xs px-2 py-1 rounded-md font-semibold">
-                                        -{Math.round(((p.prix - p.promoPrix) / p.prix) * 100)}%
-                                    </span>
+                        {/* 🧠 GESTION DU CHARGEMENT */}
+                        {loading && (
+                            <div className="w-full text-center py-10">
+                                <div className="flex justify-center gap-4">
+                                    {[...Array(4)].map((_, i) => (
+                                        <div
+                                            key={i}
+                                            className="animate-pulse bg-gray-100 rounded-2xl w-[230px] h-64 shadow-sm"
+                                        ></div>
+                                    ))}
+                                </div>
+                                <p className="text-gray-500 mt-4 text-sm">Chargement des promotions...</p>
+                            </div>
+                        )}
 
-                                    {/* Image */}
-                                    <img
-                                        src={p.image}
-                                        alt={p.nom}
-                                        className="w-full h-55 object-cover"
-                                    />
+                        {/* 🧠 GESTION DES ERREURS */}
+                        {error && !loading && (
+                            <div className="w-full text-center text-red-500 py-10 font-semibold">
+                                {error}
+                            </div>
+                        )}
 
-                                    {/* Infos produit */}
-                                    <div className="p-4">
-                                        <h3 className="text-lg font-semibold text-gray-800 truncate">{p.nom}</h3>
-                                        <div className="flex items-center gap-2 mt-1">
-                                            <span className="text-sm line-through text-gray-400">
-                                                {p.prix.toFixed(2)} €
-                                            </span>
-                                            <span className="text-orange-600 font-bold">
-                                                {p.promoPrix.toFixed(2)} €
-                                            </span>
+                        {/* 🧠 AFFICHAGE NORMAL SI TOUT EST OK */}
+                        {!loading &&
+                            !error &&
+                            produits
+                                .filter((p) => p.promo) // 👉 uniquement les produits en promo
+                                .map((p) => (
+                                    <Link
+                                        key={p.id}
+                                        to={`/produit/${p.id}`}
+                                        className="min-w-[230px] bg-white rounded-2xl shadow-md hover:shadow-lg transition relative overflow-hidden snap-center"
+                                    >
+                                        {/* Badge promo avec le % de réduction */}
+                                        <span className="absolute top-3 left-3 bg-[#d3420c] text-white text-xs px-2 py-1 rounded-md font-semibold">
+                                            -{Math.round(((p.prix - p.promoPrix) / p.prix) * 100)}%
+                                        </span>
+
+                                        {/* Image */}
+                                        <img
+                                            src={p.image}
+                                            alt={p.nom}
+                                            className="w-full h-55 object-cover"
+                                        />
+
+                                        {/* Infos produit */}
+                                        <div className="p-4">
+                                            <h3 className="text-lg font-semibold text-gray-800 truncate">
+                                                {p.nom}
+                                            </h3>
+                                            <div className="flex items-center gap-2 mt-1">
+                                                <span className="text-sm line-through text-gray-400">
+                                                    {p.prix.toFixed(2)} €
+                                                </span>
+                                                <span className="text-orange-600 font-bold">
+                                                    {p.promoPrix.toFixed(2)} €
+                                                </span>
+                                            </div>
                                         </div>
-                                    </div>
-                                </Link>
-                            ))}
+                                    </Link>
+                                ))}
                     </div>
+
                     {/* 👉 Flèche droite */}
                     <button
                         onClick={() => scrollRight(promosRef)}
